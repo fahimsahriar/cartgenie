@@ -1,0 +1,45 @@
+# Root Directory
+env/
+
+# Ignore all node_modules folders
+node_modules/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore environment variables
+.env
+
+# Ignore database files
+*.sqlite3
+
+# Ignore Django migrations
+backend/**/*.pyc
+backend/**/migrations/
+backend/**/migrations/*.py
+backend/**/migrations/*.pyc
+backend/**/migrations/__pycache__/
+backend/**/migrations/*.pyo
+backend/**/*.egg-info/
+backend/.venv/
+backend/venv/
+backend/env/
+backend/.env
+backend/local_settings.py
+
+# Ignore log files
+*.log
+
+# Ignore coverage reports
+coverage/
+htmlcov/
+
+# Ignore built React files
+client/build/
+client/.env
+
+# Ignore other potentially sensitive files
+client/.DS_Store
+client/yarn-error.log
+client/npm-debug.log
