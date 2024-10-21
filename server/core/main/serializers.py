@@ -14,11 +14,12 @@ class OrderSerializer(serializers.ModelSerializer):
 class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
-        fields = '__all__'
+        fields = ['id', 'product', 'quantity', 'total_price']
+
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, source='cartitem_set')
+    items = CartItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Cart
-        fields = ['user', 'items']
+        fields = ['id', 'user', 'items', 'created_at']
