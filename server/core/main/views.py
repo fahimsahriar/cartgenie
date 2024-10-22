@@ -1,11 +1,12 @@
 from rest_framework import generics, status, views
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from .models import Category, Product, Order, Cart, CartItem
+from .models import Category, Product, Order, OrderItem, Cart, CartItem
 from .serializers import CategorySerializer, ProductSerializer, OrderSerializer, CartSerializer, CartItemSerializer
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.exceptions import ValidationError
 
 class CategoryListCreateView(views.APIView):
     permission_classes = [IsAdminUser]  # Only admins can create categories
@@ -69,7 +70,6 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -118,11 +118,43 @@ class CartItemDeleteView(generics.DestroyAPIView):
     lookup_field = 'pk'  # Ensure this matches your URL pattern
     Response({'message': 'Item added to cart'}, status=status.HTTP_201_CREATED)
 
-# Order Views
-class OrderList(generics.ListCreateAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
+class OrderCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
+
+    def perform_create(self, serializer):
+        cart = Cart.objects.get(user=self.request.user)
+        
+        # Check if the cart is empty
+        if not cart.items.exists():
+            raise ValidationError("Your cart is empty. Please add items to the cart before placing an order.")
+        
+        # Calculate total price but do not store it in the database
+        total_price = sum(item.total_price for item in cart.items.all())
+
+        # Create the order without 'total_price'
+        order = serializer.save(user=self.request.user)
+
+        # Process each cart item into the order
+        for item in cart.items.all():
+            OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity, price=item.product.price)
+            item.delete()  # Clear cart items after creating the order
+            
+        return order
+    
+class OrderListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
+
+class OrderDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
 
 class OrderDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()

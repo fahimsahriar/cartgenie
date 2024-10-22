@@ -1,87 +1,46 @@
+# tests.py
 from django.urls import reverse
-from rest_framework.test import APITestCase
 from rest_framework import status
-from main.models import Product, Category
+from rest_framework.test import APITestCase
+from .models import Category, User, Cart, Product, Order
 
-class ProductViewTests(APITestCase):
-
+class OrderTests(APITestCase):
     def setUp(self):
-        # Create sample categories
-        self.category1 = Category.objects.create(name='Electronics', slug='electronics')
-        self.category2 = Category.objects.create(name='Clothing', slug='clothing')
-
-        # Create sample products
-        self.product1 = Product.objects.create(
-            name='Smartphone',
-            description='Latest smartphone with cool features.',
-            price=499.99,
-            stock=10,
-            category=self.category1
+        # Create a user
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.category = Category.objects.create(name='Electronics', slug='electronics')
+        
+        # Create a product
+        self.product = Product.objects.create(
+            category=self.category,
+            name='Test Product',
+            description='Test Description',
+            price=10.00,
+            stock=10
         )
-        self.product2 = Product.objects.create(
-            name='T-shirt',
-            description='Stylish T-shirt for men.',
-            price=19.99,
-            stock=100,
-            category=self.category2
-        )
+        
+        # Create a cart and add the product
+        self.cart = Cart.objects.create(user=self.user)
+        self.cart.items.create(product=self.product, quantity=2)
 
-    def test_create_single_product(self):
-        url = reverse('product-list-create')
-        data = {
-            "name": "Laptop",
-            "description": "Powerful laptop for gaming.",
-            "price": 999.99,
-            "stock": 5,
-            "category": self.category1.id
-        }
-        response = self.client.post(url, data, format='json')
+    def test_create_order(self):
+        # Log in the user
+        self.client.login(username='testuser', password='testpass')
+
+        # Send a request to create an order
+        response = self.client.post(reverse('order-list-create'), {})
+        
+        # Check that the response status code is 201 (Created)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Product.objects.count(), 3)  # Two initial products, one new
+        
+        # Check that the order was created
+        order = Order.objects.get(user=self.user)
+        
+        # Check that order items were created
+        self.assertEqual(order.items.count(), 1)  # Check one order item exists
+        self.assertEqual(order.items.first().product, self.product)  # Check it matches the product
+        self.assertEqual(order.items.first().quantity, 2)  # Check the quantity is correct
 
-    def test_create_bulk_products(self):
-        url = reverse('product-list-create')
-        data = [
-            {
-                "name": "Headphones",
-                "description": "Noise-cancelling headphones.",
-                "price": 99.99,
-                "stock": 30,
-                "category": self.category1.id
-            },
-            {
-                "name": "Jeans",
-                "description": "Comfortable jeans for all-day wear.",
-                "price": 49.99,
-                "stock": 50,
-                "category": self.category2.id
-            }
-        ]
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Product.objects.count(), 4)  # Two initial products, two new
-
-    def test_search_products(self):
-        url = reverse('product-list-create') + '?search=Smartphone'
-        response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)  # Only one matches 'Smartphone'
-
-    def test_filter_products_by_category(self):
-        url = reverse('product-list-create') + f'?category={self.category1.name}'
-        response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)  # Only products in 'Electronics'
-
-    def test_filter_products_by_price_range(self):
-        url = reverse('product-list-create') + '?min_price=10&max_price=50'
-        response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)  # One product within this price range
-
-    def test_pagination(self):
-        # Assuming ProductPagination has set 1 item per page
-        url = reverse('product-list-create') + '?page=1'
-        response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 1)  # First page has 1 product
+        # Check that the product stock has decreased
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, 8)  # Original stock was 10, minus 2 for the order

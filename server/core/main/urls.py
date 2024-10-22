@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import CategoryListCreateView, ProductListCreateView, ProductDetail
-from .views import CartDetail, AddToCart, CartItemDeleteView, OrderList, OrderDetail
+from .views import CategoryListCreateView, ProductListCreateView, ProductDetail, OrderListView
+from .views import CartDetail, AddToCart, CartItemDeleteView, OrderCreateView, OrderDetail
 
 urlpatterns = [
     path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
@@ -13,7 +13,8 @@ urlpatterns = [
     path('cart/add/', AddToCart.as_view(), name='add-to-cart'),
     path('cart/remove/<int:pk>/', CartItemDeleteView.as_view(), name='cart-item-remove'),
 
-    path('orders/', OrderList.as_view(), name='order-list'),
+    path('orders/', OrderListView.as_view(), name='order-list-create'),
+    path('orders/create/', OrderCreateView.as_view(), name='order-create'),
     path('orders/<int:pk>/', OrderDetail.as_view(), name='order-detail'),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
