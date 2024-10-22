@@ -7,6 +7,33 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import ValidationError
+from .serializers import UserRegistrationSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import login
+
+class UserRegistrationView(generics.CreateAPIView):
+    serializer_class = UserRegistrationSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = self.perform_create(serializer)
+        user = serializer.save()
+        
+        # Log the user in (optional)
+        login(request, user)
+
+        # Create tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'username': user.username,
+                'email': user.email,
+            }
+        }, status=status.HTTP_201_CREATED)
 
 class CategoryListCreateView(views.APIView):
     permission_classes = [IsAdminUser]  # Only admins can create categories

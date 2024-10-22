@@ -1,5 +1,22 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 from .models import Category, Product, Order, OrderItem, Cart, CartItem
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'email']
+
+    def create(self, validated_data):
+        user = User(
+            username=validated_data['username'],
+            email=validated_data['email']
+        )
+        user.set_password(validated_data['password'])  # Hash the password
+        user.save()
+        return user
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,10 +27,6 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
-
-
-from rest_framework import serializers
-from .models import Order, OrderItem, Product
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = serializers.StringRelatedField()  # Change this to serialize product details as needed
@@ -57,12 +70,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
         return order
 
-
 class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['id', 'product', 'quantity', 'total_price']
-
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
