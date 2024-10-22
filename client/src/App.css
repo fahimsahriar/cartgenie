@@ -1,0 +1,27 @@
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure full height */
+}
+
+.main-content {
+  flex: 1; /* This will allow the main content to grow and push the footer down */
+  padding-top: 56px; /* Adjust for the fixed navbar height */
+}
+
+/* Additional styles for header and footer */
+header {
+  background-color: #f8f9fa; /* Example background color for the header */
+  padding: 1rem;
+}
+
+footer {
+  background-color: #f8f9fa; /* Example background color for the footer */
+  padding: 1rem;
+  text-align: center;
+}
