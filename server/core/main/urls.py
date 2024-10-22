@@ -1,14 +1,17 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import ProductList, ProductDetail, CartDetail, AddToCart, RemoveFromCart, OrderList, OrderDetail
+from .views import CategoryListCreateView, ProductListCreateView, ProductDetail
+from .views import CartDetail, AddToCart, CartItemDeleteView, OrderList, OrderDetail
 
 urlpatterns = [
-    path('products/', ProductList.as_view(), name='product-list'),
+    path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
+
+    path('products/', ProductListCreateView.as_view(), name='product-list-create'),
     path('products/<int:pk>/', ProductDetail.as_view(), name='product-detail'),
 
     path('cart/', CartDetail.as_view(), name='cart-detail'),
     path('cart/add/', AddToCart.as_view(), name='add-to-cart'),
-    path('cart/remove/', RemoveFromCart.as_view(), name='remove-from-cart'),
+    path('cart/remove/<int:pk>/', CartItemDeleteView.as_view(), name='cart-item-remove'),
 
     path('orders/', OrderList.as_view(), name='order-list'),
     path('orders/<int:pk>/', OrderDetail.as_view(), name='order-detail'),
