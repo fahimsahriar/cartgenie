@@ -8,6 +8,7 @@ import Cart from './components/Cart';
 import Register from './components/Register';
 import Login from './components/Login';
 import Profile from './components/Profile';
+import OrderDetail from './components/OrderDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css'; // Import the CSS file
 
@@ -35,6 +36,7 @@ const App = () => {
                         } />
                         <Route path="/register" element={<Register />} />
                         <Route path="/login" element={<Login setAuth={setIsAuthenticated} />} />
+                        <Route path="/orders/:orderId" element={<OrderDetail />} />
                     </Routes>
                 </main>
                 <Footer />

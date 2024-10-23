@@ -1,32 +1,39 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Col, Row, Button, Form } from 'react-bootstrap';
+import { Card, Col, Row, Button, Pagination, Container } from 'react-bootstrap';
 import axios from 'axios';
 const apiUrl = import.meta.env.VITE_API_URL;
 
+const dummyImage = 'https://www.gstatic.com/webp/gallery/1.webp'; // Dummy image URL
+
 const ProductList = () => {
     const [products, setProducts] = useState([]);
-    const [quantities, setQuantities] = useState({}); // Store quantities per product
+    const [currentPage, setCurrentPage] = useState(1); // Current page number
+    const [totalPages, setTotalPages] = useState(1);   // Total number of pages
+    const [loading, setLoading] = useState(false);     // Loading state for better UX
 
     useEffect(() => {
-        const fetchProducts = async () => {
-            const response = await axios.get(`${apiUrl}/products`);
-            setProducts(response.data.results);
-            // Initialize quantities for all products
-            const initialQuantities = {};
-            response.data.results.forEach(product => {
-                initialQuantities[product.id] = 1; // Default quantity is 1 for each product
-            });
-            setQuantities(initialQuantities);
+        const fetchProducts = async (page = 1) => {
+            setLoading(true); // Start loading
+            try {
+                const response = await axios.get(`${apiUrl}/products/?page=${page}`);
+                setProducts(response.data.results);
+                setTotalPages(response.data.total_pages); // Assuming your API returns total pages
+                setCurrentPage(page);
+            } catch (error) {
+                console.error('Failed to fetch products:', error);
+            } finally {
+                setLoading(false); // Stop loading
+            }
         };
-        fetchProducts();
-    }, []);
 
-    // Function to add product to cart
+        fetchProducts(currentPage);
+    }, [currentPage]);
+
+    // Function to add product to cart with default quantity 1
     const addToCart = async (product_id) => {
         try {
             const token = localStorage.getItem('token');
-            const quantity = quantities[product_id]; // Get the quantity for this specific product
-
+            const quantity = 1; // Default quantity
             const response = await axios.post(
                 `${apiUrl}/cart/add/`,
                 { product_id, quantity },
@@ -42,46 +49,70 @@ const ProductList = () => {
         }
     };
 
-    // Handle quantity change for a specific product
-    const handleQuantityChange = (product_id, newQuantity) => {
-        setQuantities(prevQuantities => ({
-            ...prevQuantities,
-            [product_id]: newQuantity, // Update the quantity for this product
-        }));
+    // Pagination handler
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
     };
 
     return (
-        <Row className="mt-4">
-            {products.map(product => (
-                <Col md={4} key={product.id} className="mb-4">
-                    <Card>
-                        <Card.Img variant="top" src={product.image} />
-                        <Card.Body>
-                            <Card.Title>{product.name}</Card.Title>
-                            <Card.Text>${product.price}</Card.Text>
+        <Container className="product-page">
+            <h2 className="text-center my-4">Available Products</h2>
+            {loading ? (
+                <div>Loading...</div>
+            ) : (
+                <>
+                    <Row>
+                        {products.map(product => (
+                            <Col md={4} key={product.id} className="mb-4 d-flex align-items-stretch">
+                                <Card className="shadow-sm h-100">
+                                    <Card.Img
+                                        variant="top"
+                                        src={product.image ? product.image : dummyImage} // Use dummy image if no image is available
+                                        alt={product.name}
+                                        style={{ height: '200px', objectFit: 'cover' }} // Consistent image size
+                                    />
+                                    <Card.Body className="d-flex flex-column">
+                                        <Card.Title>{product.name}</Card.Title>
+                                        <Card.Text>
+                                            {product.price ? `$${Number(product.price).toFixed(2)}` : 'Price not available'}
+                                        </Card.Text>
+                                        <Card.Text>{product.description || 'No description available.'}</Card.Text>
+                                        <Button
+                                            variant="primary"
+                                            onClick={() => addToCart(product.id)}
+                                            className="mt-auto"
+                                        >
+                                            Add to Cart
+                                        </Button>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
 
-                            {/* Input for quantity for each product */}
-                            <Form.Group controlId={`formQuantity-${product.id}`}>
-                                <Form.Label>Quantity</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    min="1"
-                                    value={quantities[product.id]} // Get the quantity for this product
-                                    onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                                />
-                            </Form.Group>
+                    {/* Pagination controls */}
+                    <Pagination className="justify-content-center mt-4">
+                        <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
+                        <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
 
-                            <Button 
-                                variant="primary" 
-                                onClick={() => addToCart(product.id)}
+                        {[...Array(totalPages)].map((_, index) => (
+                            <Pagination.Item
+                                key={index + 1}
+                                active={index + 1 === currentPage}
+                                onClick={() => handlePageChange(index + 1)}
                             >
-                                Add to Cart
-                            </Button>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            ))}
-        </Row>
+                                {index + 1}
+                            </Pagination.Item>
+                        ))}
+
+                        <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+                        <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+                    </Pagination>
+                </>
+            )}
+        </Container>
     );
 };
 

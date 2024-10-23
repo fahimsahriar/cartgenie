@@ -1,0 +1,79 @@
+/* Main page styling */
+.product-page {
+    padding: 20px 0;
+}
+
+/* Product card styling */
+.product-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 8px;
+    height: 100%; /* Ensure the card takes the full height */
+}
+
+/* Hover effect for product card */
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Image styling for consistent size */
+.product-image {
+    height: 200px;
+    width: 100%;
+    object-fit: cover; /* Ensures the image covers the space without distortion */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+/* Product title styling with text overflow handling */
+.product-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    white-space: nowrap; /* Prevents the title from wrapping */
+    overflow: hidden;    /* Hides overflowed text */
+    text-overflow: ellipsis; /* Adds ellipsis for overflowing text */
+}
+
+/* Product price styling */
+.product-price {
+    color: #28a745;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/* Product description styling with limited lines */
+.product-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Limit the description to 3 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Add to cart button styling */
+.add-to-cart-btn {
+    background-color: #007bff;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #0056b3;
+    transition: background-color 0.3s;
+}
+
+/* Responsive grid for consistent layout */
+@media (min-width: 768px) {
+    .product-card {
+        min-height: 500px; /* Ensure consistent card height */
+    }
+}

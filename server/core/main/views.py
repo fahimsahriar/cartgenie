@@ -11,6 +11,7 @@ from rest_framework.exceptions import ValidationError
 from .serializers import UserRegistrationSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login
+from rest_framework.exceptions import NotFound
 
 class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserProfileSerializer
@@ -169,18 +170,28 @@ class OrderCreateView(generics.ListCreateAPIView):
         if not cart.items.exists():
             raise ValidationError("Your cart is empty. Please add items to the cart before placing an order.")
         
-        # Calculate total price but do not store it in the database
+        # Calculate total price (optional, not storing this in the database)
         total_price = sum(item.total_price for item in cart.items.all())
 
-        # Create the order without 'total_price'
-        order = serializer.save(user=self.request.user)
+        # Get delivery and phone from the request data
+        delivery = self.request.data.get('delivery', 'none')
+        phone = self.request.data.get('phone', 'none')
+
+        # Create the order with the provided delivery and phone
+        order = serializer.save(user=self.request.user, delivery=delivery, phone=phone)
 
         # Process each cart item into the order
         for item in cart.items.all():
-            OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity, price=item.product.price)
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
             item.delete()  # Clear cart items after creating the order
             
         return order
+
     
 class OrderListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]

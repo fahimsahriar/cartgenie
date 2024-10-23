@@ -62,8 +62,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'created_at', 'updated_at', 'status', 'items']
-        read_only_fields = ['created_at', 'updated_at', 'status']
+        fields = ['id', 'user', 'created_at', 'updated_at', 'status', 'items', 'delivery', 'phone']
+        read_only_fields = ['created_at', 'updated_at', 'status']  # Status will be set to 'Pending' by default
 
     def create(self, validated_data):
         # Extract the user from the request context
@@ -72,7 +72,7 @@ class OrderSerializer(serializers.ModelSerializer):
         # Remove 'user' from validated_data to avoid passing it twice
         validated_data.pop('user', None)
         
-        # Create the order
+        # Create the order with delivery and phone fields
         order = Order.objects.create(user=user, **validated_data)
         
         # Get the user's cart
@@ -90,6 +90,7 @@ class OrderSerializer(serializers.ModelSerializer):
             cart_item.delete()
 
         return order
+
 
 
 class CartItemSerializer(serializers.ModelSerializer):
