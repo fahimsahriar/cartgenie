@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
@@ -8,6 +7,7 @@ import ProductList from './components/ProductList';
 import Cart from './components/Cart';
 import Register from './components/Register';
 import Login from './components/Login';
+import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css'; // Import the CSS file
 
@@ -17,7 +17,8 @@ const App = () => {
     return (
         <Router>
             <div className="app-container">
-                <Header />
+                {/* Pass isAuthenticated and setIsAuthenticated to the Header */}
+                <Header isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
                 <main className="main-content">
                     <Routes>
                         <Route path="/" element={<Home />} />
@@ -25,6 +26,11 @@ const App = () => {
                         <Route path="/cart" element={
                             <ProtectedRoute>
                                 <Cart />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/profile" element={
+                            <ProtectedRoute>
+                                <Profile />
                             </ProtectedRoute>
                         } />
                         <Route path="/register" element={<Register />} />

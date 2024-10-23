@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from .models import Category, Product, Order, OrderItem, Cart, CartItem
 from .serializers import CategorySerializer, ProductSerializer, OrderSerializer, CartSerializer, CartItemSerializer
+from .serializers import UserProfileSerializer
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,17 +12,28 @@ from .serializers import UserRegistrationSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login
 
+class UserProfileView(generics.RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = self.perform_create(serializer)
-        user = serializer.save()
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            # Simplifying the error response
+            simplified_errors = {
+                key: value[0] for key, value in e.detail.items()  # Take the first error for each field
+            }
+            return Response({'error': simplified_errors}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Log the user in (optional)
-        login(request, user)
+        user = serializer.save()
 
         # Create tokens
         refresh = RefreshToken.for_user(user)
@@ -34,6 +46,7 @@ class UserRegistrationView(generics.CreateAPIView):
                 'email': user.email,
             }
         }, status=status.HTTP_201_CREATED)
+
 
 class CategoryListCreateView(views.APIView):
     permission_classes = [IsAdminUser]  # Only admins can create categories
