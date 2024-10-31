@@ -70,7 +70,7 @@ class CategoryListCreateView(views.APIView):
 
 # Custom pagination for better control
 class ProductPagination(PageNumberPagination):
-    page_size = 10  # Adjust the page size as needed
+    page_size = 6  # Adjust the page size as needed
 
 class ProductListCreateView(generics.ListCreateAPIView):
     queryset = Product.objects.all()

@@ -1,40 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Col, Row, Button, Pagination, Container } from 'react-bootstrap';
 import axios from 'axios';
-const apiUrl = import.meta.env.VITE_API_URL;
 
+const apiUrl = import.meta.env.VITE_API_URL;
 const dummyImage = 'https://www.gstatic.com/webp/gallery/1.webp'; // Dummy image URL
 
 const ProductList = () => {
     const [products, setProducts] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1); // Current page number
-    const [totalPages, setTotalPages] = useState(1);   // Total number of pages
-    const [loading, setLoading] = useState(false);     // Loading state for better UX
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [nextPage, setNextPage] = useState(null);
+    const [prevPage, setPrevPage] = useState(null);
 
     useEffect(() => {
-        const fetchProducts = async (page = 1) => {
-            setLoading(true); // Start loading
+        const fetchProducts = async () => {
+            setLoading(true);
             try {
-                const response = await axios.get(`${apiUrl}/products/?page=${page}`);
+                const response = await axios.get(`${apiUrl}/products/?page=${currentPage}`);
+                
                 setProducts(response.data.results);
-                setTotalPages(response.data.total_pages); // Assuming your API returns total pages
-                setCurrentPage(page);
+                setTotalPages(Math.ceil(response.data.count / 6)); // 6 items per page
+                setNextPage(response.data.next);
+                setPrevPage(response.data.previous);
             } catch (error) {
                 console.error('Failed to fetch products:', error);
             } finally {
-                setLoading(false); // Stop loading
+                setLoading(false);
             }
         };
 
-        fetchProducts(currentPage);
+        fetchProducts();
     }, [currentPage]);
 
-    // Function to add product to cart with default quantity 1
     const addToCart = async (product_id) => {
         try {
             const token = localStorage.getItem('token');
-            const quantity = 1; // Default quantity
-            const response = await axios.post(
+            const quantity = 1;
+            await axios.post(
                 `${apiUrl}/cart/add/`,
                 { product_id, quantity },
                 {
@@ -43,13 +46,11 @@ const ProductList = () => {
                     },
                 }
             );
-            console.log('Product added to cart:', response.data);
         } catch (error) {
             console.error('Failed to add product to cart:', error);
         }
     };
 
-    // Pagination handler
     const handlePageChange = (page) => {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page);
@@ -69,9 +70,9 @@ const ProductList = () => {
                                 <Card className="shadow-sm h-100">
                                     <Card.Img
                                         variant="top"
-                                        src={product.image ? product.image : dummyImage} // Use dummy image if no image is available
+                                        src={product.image ? product.image : dummyImage}
                                         alt={product.name}
-                                        style={{ height: '200px', objectFit: 'cover' }} // Consistent image size
+                                        style={{ height: '200px', objectFit: 'cover' }}
                                     />
                                     <Card.Body className="d-flex flex-column">
                                         <Card.Title>{product.name}</Card.Title>
@@ -92,10 +93,9 @@ const ProductList = () => {
                         ))}
                     </Row>
 
-                    {/* Pagination controls */}
                     <Pagination className="justify-content-center mt-4">
-                        <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
-                        <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+                        <Pagination.First onClick={() => handlePageChange(1)} disabled={!prevPage} />
+                        <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={!prevPage} />
 
                         {[...Array(totalPages)].map((_, index) => (
                             <Pagination.Item
@@ -107,8 +107,8 @@ const ProductList = () => {
                             </Pagination.Item>
                         ))}
 
-                        <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
-                        <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+                        <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={!nextPage} />
+                        <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={!nextPage} />
                     </Pagination>
                 </>
             )}
