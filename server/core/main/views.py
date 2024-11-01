@@ -114,7 +114,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
 class CartDetail(generics.RetrieveAPIView):
     #queryset = Cart.objects.all()

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Col, Row, Button, Pagination, Container } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -36,6 +37,12 @@ const ProductList = () => {
     const addToCart = async (product_id) => {
         try {
             const token = localStorage.getItem('token');
+
+            if (!token) {
+                window.location.href = '/login';  // Redirect to login if not authenticated
+                return;
+            }
+
             const quantity = 1;
             await axios.post(
                 `${apiUrl}/cart/add/`,
@@ -68,26 +75,28 @@ const ProductList = () => {
                         {products.map(product => (
                             <Col md={4} key={product.id} className="mb-4 d-flex align-items-stretch">
                                 <Card className="shadow-sm h-100">
-                                    <Card.Img
-                                        variant="top"
-                                        src={product.image ? product.image : dummyImage}
-                                        alt={product.name}
-                                        style={{ height: '200px', objectFit: 'cover' }}
-                                    />
-                                    <Card.Body className="d-flex flex-column">
-                                        <Card.Title>{product.name}</Card.Title>
-                                        <Card.Text>
-                                            {product.price ? `$${Number(product.price).toFixed(2)}` : 'Price not available'}
-                                        </Card.Text>
-                                        <Card.Text>{product.description || 'No description available.'}</Card.Text>
-                                        <Button
-                                            variant="primary"
-                                            onClick={() => addToCart(product.id)}
-                                            className="mt-auto"
-                                        >
-                                            Add to Cart
-                                        </Button>
-                                    </Card.Body>
+                                    <Link to={`/products/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <Card.Img
+                                            variant="top"
+                                            src={product.image ? product.image : dummyImage}
+                                            alt={product.name}
+                                            style={{ height: '200px', objectFit: 'cover' }}
+                                        />
+                                        <Card.Body className="d-flex flex-column">
+                                            <Card.Title>{product.name}</Card.Title>
+                                            <Card.Text>
+                                                {product.price ? `$${Number(product.price).toFixed(2)}` : 'Price not available'}
+                                            </Card.Text>
+                                            <Card.Text>{product.description || 'No description available.'}</Card.Text>
+                                        </Card.Body>
+                                    </Link>
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => addToCart(product.id)}
+                                        className="mt-auto"
+                                    >
+                                        Add to Cart
+                                    </Button>
                                 </Card>
                             </Col>
                         ))}
